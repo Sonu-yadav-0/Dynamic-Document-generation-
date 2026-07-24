@@ -53,7 +53,7 @@ export default class GN_Quote_generation extends LightningElement {
     }
 
     get vfUrl() {
-        return 'https://orgfarm-d16aed7449-dev-ed--c.develop.vf.force.com/apex/GN_QuoteTemplateVf?id=' + this.recordId;
+        return 'https://allied-era-dev-ed--c.develop.vf.force.com/apex/GN_QuoteTemplateVf?id=' + this.recordId;
     }
 
     handlePreview() {

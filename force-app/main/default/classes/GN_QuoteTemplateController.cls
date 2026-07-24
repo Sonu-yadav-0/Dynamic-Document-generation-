@@ -65,12 +65,12 @@ public class GN_QuoteTemplateController {
         productFamilyList = new List<String>();
         selectedAnnexure = new List<String>();
         sectionList = new List<Section__C>();
-        quoteId = System.currentPagereference().getParameters().get('Id');
+        quoteId = System.currentPagereference().getParameters().get('Id'); // Quote id get
         Set<Id> accId = new Set<Id>();
         Set<Id> productIds = new Set<Id>();
         Id quoteTemplateId;
         list<Quote> qtOwnerid = [SELECT Id, Ownerid FROM Quote WHERE Owner.Type = 'User' and  id =: quoteId];
-         Quote qt = [Select id, name,Account.Account_Email__c,Contact.Name,Contact.Email,Contact.Phone,Account.Owner.Name,BillingStreet,BillingCity,BillingState,BillingStateCode,BillingCountry,BillingPostalCode,Account.Name, Account.Phone,Quote_Template__c, Approval_Status__c, Grand_Total_FOP_Price__c, Total_Customer_Discount_Formula__c, Quote_Template__r.Template_Theme_Color__c, Quote_Template__r.BottomCoverImage_Name__c, Quote_Template__r.Showcase_Image_Name__c, Opportunity.Owner.CompanyName, Opportunity.Owner.Account_Name__c, Opportunity.Owner.Account.Header_Address__c, Opportunity.Owner.Account.Header_Logo__c, Opportunity.Owner.Account.Footer_Logo__c, Opportunity.Owner.Account.Header_Address_Left_Spacing__c, Opportunity.Owner.Account.Footer_Width__c, Opportunity.Owner.Account.Header_Logo_Height__c, Opportunity.Owner.Account.Header_Logo_Width__c, Opportunity.Owner.AccountId, OwnerId, Owner.Name, Owner.Title, Owner.Email, Offer_Price__c, Total_Customer_Discount__c, Total_Unit_Basic__c,Add_Technical_Specification__c,QuoteNumber, (Select id, Product2Id, Product2.Name, Product2.Commodity_code__c, Product2.Component_Type__c, Product2.Variant_Type__c, Product2.Search_Key_I__c, Quantity, UnitPrice, TotalPrice, Approval_Status__c, Total_Approved_Customer_Discount__c, Sequence_Number__c, Include_In_Bundle__c from QuoteLineItems) from Quote where id =: quoteId];
+         Quote qt = [Select id, name,Account.Account_Email__c,Contact.Name,Contact.Email,Contact.Phone,Account.Owner.Name,BillingStreet,BillingCity,BillingState,BillingStateCode,BillingCountry,BillingPostalCode,Account.Name, Account.Phone,Quote_Template__c, Grand_Total_FOP_Price__c, Total_Customer_Discount_Formula__c, Quote_Template__r.Template_Theme_Color__c, Quote_Template__r.BottomCoverImage_Name__c, Quote_Template__r.Showcase_Image_Name__c, Opportunity.Owner.CompanyName, Opportunity.Owner.Account_Name__c, Opportunity.Owner.Account.Header_Address__c, Opportunity.Owner.Account.Header_Logo__c, Opportunity.Owner.Account.Footer_Logo__c, Opportunity.Owner.Account.Header_Address_Left_Spacing__c, Opportunity.Owner.Account.Footer_Width__c, Opportunity.Owner.Account.Header_Logo_Height__c, Opportunity.Owner.Account.Header_Logo_Width__c, Opportunity.Owner.AccountId, OwnerId, Owner.Name, Owner.Title, Owner.Email, Offer_Price__c, Total_Customer_Discount__c, Total_Unit_Basic__c,Add_Technical_Specification__c,QuoteNumber, (Select id, Product2Id, Product2.Name, Product2.Commodity_code__c, Product2.Component_Type__c, Product2.Variant_Type__c, Product2.Search_Key_I__c, Quantity, UnitPrice, TotalPrice, Approval_Status__c, Total_Approved_Customer_Discount__c, Sequence_Number__c, Include_In_Bundle__c from QuoteLineItems) from Quote where id =: quoteId];
        system.debug('quoteId '+quoteId);
         //Get Cover Page Title
         User u = new User();
@@ -926,7 +926,7 @@ public class GN_QuoteTemplateController {
     * @description getInvoiceData: This method return section by list of list<HeaderWrapper> for creating complete invoice table. 
     */ 
     public static Map<String, List<List<HeaderWrapper>>> getInvoiceData(List<Section__c> invoiceTableSections, Id quoteId, String darkShadeColor, String lightShadeColor, Quote quoteObj){
-        
+        system.debug('getInvoiceData enter');
         Map<String, List<List<HeaderWrapper>>> invoiceTableWrapperMapToReturn = new Map<String, List<List<HeaderWrapper>>>();
         Set<Id> sectionIds = new Set<Id>();
         if(invoiceTableSections != null){
