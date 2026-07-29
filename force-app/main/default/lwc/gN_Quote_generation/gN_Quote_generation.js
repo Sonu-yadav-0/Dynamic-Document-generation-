@@ -3,6 +3,7 @@ import { CloseActionScreenEvent } from 'lightning/actions';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getQuoteLines from '@salesforce/apex/GN_Quote_Generation.getQuoteLines';
 import generateAndAttachQuotePdf from '@salesforce/apex/GN_Quote_Generation.generateAndAttachQuotePdf';
+import generateAndAttachQuoteWord from '@salesforce/apex/GN_Quote_Generation.generateAndAttachQuoteWord';
 
 const COLUMNS = [
     {
@@ -65,7 +66,20 @@ export default class GN_Quote_generation extends LightningElement {
         this.dispatchEvent(new CloseActionScreenEvent());
     }
 
-    async handleDownload() {
+    handleBack() {
+        this.showPreview = false;
+        this.showDataTable = true;
+    }
+
+    handleDownloadPdf() {
+        return this.generateDocument(generateAndAttachQuotePdf, 'PDF');
+    }
+
+    handleDownloadWord() {
+        return this.generateDocument(generateAndAttachQuoteWord, 'Word document');
+    }
+
+    async generateDocument(apexMethod, label) {
         if (!this.recordId) {
             this.error = 'No quote record was provided.';
             return;
@@ -75,16 +89,18 @@ export default class GN_Quote_generation extends LightningElement {
         this.isGenerating = true;
 
         try {
-            await generateAndAttachQuotePdf({ quoteId: this.recordId });
+            const driveLink = await apexMethod({ quoteId: this.recordId });
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Success',
-                    message: 'The PDF was generated and attached to the quote.',
-                    variant: 'success'
+                    message: 'The {0} was generated and uploaded to Google Drive: {1}',
+                    messageData: [label, { url: driveLink, label: 'Open in Google Drive' }],
+                    variant: 'success',
+                    mode: 'sticky'
                 })
             );
         } catch (e) {
-            const message = e?.body?.message || e?.message || 'Unable to generate the PDF.';
+            const message = e?.body?.message || e?.message || `Unable to generate the ${label}.`;
             this.error = message;
             this.dispatchEvent(new ShowToastEvent({ title: 'Error', message, variant: 'error' }));
         } finally {

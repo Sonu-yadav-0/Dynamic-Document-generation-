@@ -156,6 +156,11 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <editable>false</editable>
+        <field>Quote.PDF_Drive_Link__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>true</editable>
         <field>Quote.Quote_Template__c</field>
         <readable>true</readable>
@@ -173,6 +178,11 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Quote.Total_Unit_Basic__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Quote.Word_Drive_Link__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>

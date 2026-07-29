@@ -1,3 +1,10 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 07-24-2026
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 public class GN_QuoteTemplateController {
     
     //variable lists
@@ -54,7 +61,9 @@ public class GN_QuoteTemplateController {
     */   
     public GN_QuoteTemplateController(ApexPages.StandardController controller) {
         
-       this.vfType = 'pdf';
+       this.vfType = ApexPages.currentPage().getParameters().get('download') == 'word'
+            ? 'application/msword#QuoteDocument.doc'
+            : 'text/html; charset=UTF-8';
         this.annexure1 = true;
         this.annexure2 = true;
         this.annexure3 = true;
@@ -611,10 +620,36 @@ public class GN_QuoteTemplateController {
         }
         
         if(ContentDocumentIds.size() > 0){
+            String baseUrl = URL.getOrgDomainUrl().toExternalForm();
+            Map<Id, ContentVersion> latestVersionByDocumentId = new Map<Id, ContentVersion>();
+            for(ContentVersion cv : [SELECT Id, ContentDocumentId, FileExtension, VersionData FROM ContentVersion WHERE ContentDocumentId IN :ContentDocumentIds AND IsLatest = true]){
+                latestVersionByDocumentId.put(cv.ContentDocumentId, cv);
+            }
             for(ContentDistribution conDistribution: [select Id, Name, ContentVersionId, ContentDocumentId, ContentDownloadUrl from ContentDistribution where ContentDocumentId =: ContentDocumentIds]){
                 String imageName = conDistribution.Name;
                 imageName = imageName.replaceAll('\\s\\d{1,2}/\\d{1,2}/\\d{4}', '');
-                imageNamesBasedUrl.put(imageName, conDistribution.ContentDownloadUrl);
+                String imageUrl = conDistribution.ContentDownloadUrl;
+                ContentVersion cv = latestVersionByDocumentId.get(conDistribution.ContentDocumentId);
+                if(cv != null && cv.VersionData != null){
+                    String mimeType = 'image/png';
+                    if(cv.FileExtension != null){
+                        String ext = cv.FileExtension.toLowerCase();
+                        if(ext == 'png') mimeType = 'image/png';
+                        else if(ext == 'jpg' || ext == 'jpeg') mimeType = 'image/jpeg';
+                        else if(ext == 'gif') mimeType = 'image/gif';
+                        else if(ext == 'svg') mimeType = 'image/svg+xml';
+                        else if(ext == 'bmp') mimeType = 'image/bmp';
+                        else if(ext == 'webp') mimeType = 'image/webp';
+                    }
+                    imageUrl = 'data:' + mimeType + ';base64,' + EncodingUtil.base64Encode(cv.VersionData);
+                } else if(imageUrl != null && !imageUrl.startsWithIgnoreCase('http')){
+                    if(imageUrl.startsWith('/')){
+                        imageUrl = baseUrl + imageUrl;
+                    } else {
+                        imageUrl = baseUrl + '/' + imageUrl;
+                    }
+                }
+                imageNamesBasedUrl.put(imageName, imageUrl);
             }
         }
         system.debug('imageNamesBasedUrl '+imageNamesBasedUrl);
@@ -931,6 +966,7 @@ public class GN_QuoteTemplateController {
         Set<Id> sectionIds = new Set<Id>();
         if(invoiceTableSections != null){
             for(Section__c eachSection : invoiceTableSections){
+                  system.debug('eachSection:--'+eachSection);
                 sectionIds.add(eachSection.Id);
             } 
         }
@@ -983,6 +1019,7 @@ public class GN_QuoteTemplateController {
                     quoteLineItemsList = getInvoiceTableQuoteLineItem(queryFields, section.Table_Object__c , quoteId, section.QuoteLineItem_Filter__c);
                     if(!quoteLineItemsList.isEmpty()) {
                         for (QuoteLineItem item : quoteLineItemsList) {
+                            system.debug(item);
                             if (!item.Product2.Name.contains('Freight') && item.Product2.Name != null) {
                                 filteredQuoteLineItemes.add(item);
                             }else{
@@ -1327,9 +1364,9 @@ public class GN_QuoteTemplateController {
             column.columnType = secTable.Type__c;
             column.columnWidth = String.valueOf(secTable.Column_width__c) + '%';
             column.headerLabel = secTable.Header_Label__c;
-            column.backgroundColor = darkShadeColor+' !important';
+            column.backgroundColor = darkShadeColor;
             column.color = 'white';
-            column.fontSize = '13px !important';
+            column.fontSize = '13px';
             column.borderTop = '1px solid rgb(127,127,127)';
             column.borderBottom = '1px solid rgb(127,127,127)';
             if(columnCounter == 1){
@@ -1421,6 +1458,7 @@ public class GN_QuoteTemplateController {
        // queryFields = queryFields.removeEnd(',');
       
         String query = 'SELECT id  , Quantity ,product2.Name ,LineNumber ,TotalPrice, UnitPrice ,Sequence_Number__c,Invoice_Table_Order__c,Total_Approved_Customer_Discount__c,Include_In_Bundle__c ,product2.Component_Type__c FROM ' + ObjectName + ' WHERE QuoteId =: quoteId'; 
+        system.debug(Query);
         return Database.query(query);
     }
  

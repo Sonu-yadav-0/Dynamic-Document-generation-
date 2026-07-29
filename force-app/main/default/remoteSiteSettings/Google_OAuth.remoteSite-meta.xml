@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RemoteSiteSetting xmlns="http://soap.sforce.com/2006/04/metadata">
+    <url>https://oauth2.googleapis.com</url>
+    <description>Google OAuth token endpoint used by the Drive service-account JWT bearer flow.</description>
+    <disableProtocolSecurity>false</disableProtocolSecurity>
+    <isActive>true</isActive>
+</RemoteSiteSetting>

@@ -53,13 +53,22 @@
             </template>
 
             <lightning-button
-    class="slds-m-left_small"
-    label="Download"
-    icon-name="utility:download"
-    variant="brand"
-    disabled={isGenerating}
-    onclick={handleDownload}>
-</lightning-button>
+                class="slds-m-left_small"
+                label="Download PDF"
+                icon-name="utility:download"
+                variant="brand"
+                disabled={isGenerating}
+                onclick={handleDownloadPdf}>
+            </lightning-button>
+
+            <lightning-button
+                class="slds-m-left_small"
+                label="Download Word"
+                icon-name="utility:download"
+                variant="brand-outline"
+                disabled={isGenerating}
+                onclick={handleDownloadWord}>
+            </lightning-button>
 
         </div>
 

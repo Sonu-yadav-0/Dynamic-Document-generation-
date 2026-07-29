@@ -4,6 +4,7 @@
 		<members>FilteredSections</members>
 		<members>GN_QuoteTemplateController</members>
 		<members>GN_Quote_Generation</members>
+		<members>GoogleDriveService</members>
 		<name>ApexClass</name>
 	</types>
 	<types>
@@ -29,16 +30,22 @@
 		<members>Quote.Approval_Status__c</members>
 		<members>Quote.Grand_Total_FOP_Price__c</members>
 		<members>Quote.Offer_Price__c</members>
+		<members>Quote.PDF_Drive_Link__c</members>
 		<members>Quote.Quote_Template__c</members>
 		<members>Quote.Total_Customer_Discount_Formula__c</members>
 		<members>Quote.Total_Customer_Discount__c</members>
 		<members>Quote.Total_Unit_Basic__c</members>
+		<members>Quote.Word_Drive_Link__c</members>
 		<members>QuoteLineItem.Approval_Status__c</members>
 		<members>QuoteLineItem.Include_In_Bundle__c</members>
 		<members>QuoteLineItem.Invoice_Table_Order__c</members>
 		<members>QuoteLineItem.Sequence_Number__c</members>
 		<members>QuoteLineItem.Total_Approved_Customer_Discount__c</members>
 		<members>User.Account_Name__c</members>
+		<members>Google_Drive_Setting__mdt.Service_Account_Email__c</members>
+		<members>Google_Drive_Setting__mdt.Certificate_Developer_Name__c</members>
+		<members>Google_Drive_Setting__mdt.Drive_Folder_Id__c</members>
+		<members>Google_Drive_Setting__mdt.Scope__c</members>
 		<name>CustomField</name>
 	</types>
 	<types>
@@ -46,11 +53,16 @@
 		<name>CustomLabel</name>
 	</types>
 	<types>
+		<members>Google_Drive_Setting.Default</members>
+		<name>CustomMetadata</name>
+	</types>
+	<types>
 		<members>Product_Specification__c</members>
 		<members>Quote_Template__c</members>
 		<members>Section_Condition__c</members>
 		<members>Section_Table__c</members>
 		<members>Section__c</members>
+		<members>Google_Drive_Setting__mdt</members>
 		<name>CustomObject</name>
 	</types>
 	<types>
@@ -72,8 +84,10 @@
 		<name>PermissionSet</name>
 	</types>
 	<types>
-		<members>*</members>
-		<name>StaticResource</name>
+		<members>Google_Drive_API</members>
+		<members>Google_OAuth</members>
+		<name>RemoteSiteSetting</name>
 	</types>
+
 	<version>67.0</version>
 </Package>

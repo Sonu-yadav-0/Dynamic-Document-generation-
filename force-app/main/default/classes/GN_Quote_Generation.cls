@@ -2,25 +2,37 @@ public with sharing class GN_Quote_Generation {
 
     @AuraEnabled
     public static String generateAndAttachQuotePdf(Id quoteId) {
+        return generateAndAttachQuoteDocument(quoteId, false);
+    }
+
+    @AuraEnabled
+    public static String generateAndAttachQuoteWord(Id quoteId) {
+        return generateAndAttachQuoteDocument(quoteId, true);
+    }
+
+    private static String generateAndAttachQuoteDocument(Id quoteId, Boolean asWord) {
         if (quoteId == null) {
             throw new AuraHandledException('Quote Id is required.');
         }
 
         try {
-            PageReference pdfPage = Page.GN_QuoteTemplateVf;
-            pdfPage.getParameters().put('id', quoteId);
+            PageReference templatePage = Page.GN_QuoteTemplateVf;
+            templatePage.getParameters().put('id', quoteId);
+            if (asWord) {
+                templatePage.getParameters().put('download', 'word');
+            }
 
-            Blob pdfBody = Test.isRunningTest()
-                ? Blob.valueOf('Test PDF')
-                : pdfPage.getContentAsPDF();
+            Blob fileBody = Test.isRunningTest()
+                ? Blob.valueOf(asWord ? '<html><body>Test DOC</body></html>' : 'Test PDF')
+                : (asWord ? templatePage.getContent() : templatePage.getContentAsPDF());
 
-            return createQuotePdfAttachment(quoteId, pdfBody);
+            return uploadAndLinkQuoteDocument(quoteId, fileBody, asWord);
         } catch (Exception ex) {
             throw new AuraHandledException(ex.getMessage());
         }
     }
 
-    private static String createQuotePdfAttachment(Id quoteId, Blob pdfBody) {
+    private static String uploadAndLinkQuoteDocument(Id quoteId, Blob fileBody, Boolean asWord) {
         Quote quoteRecord = [
             SELECT Id, Name
             FROM Quote
@@ -32,17 +44,21 @@ public with sharing class GN_Quote_Generation {
             ? 'Quote'
             : quoteRecord.Name.replaceAll('[^a-zA-Z0-9 _-]', '');
 
-        String fileName = safeName + '_Quote.pdf';
+        String fileName = safeName + '_Quote.' + (asWord ? 'doc' : 'pdf');
+        String mimeType = asWord ? 'application/msword' : 'application/pdf';
 
-        ContentVersion newVersion = new ContentVersion(
-            Title = safeName,
-            PathOnClient = fileName,
-            VersionData = pdfBody,
-            FirstPublishLocationId = quoteRecord.Id
-        );
+        String driveLink = Test.isRunningTest()
+            ? 'https://drive.google.com/test'
+            : GoogleDriveService.uploadFile(fileName, fileBody, mimeType);
 
-        insert newVersion;
-        return newVersion.Id;
+        if (asWord) {
+            quoteRecord.Word_Drive_Link__c = driveLink;
+        } else {
+            quoteRecord.PDF_Drive_Link__c = driveLink;
+        }
+        update quoteRecord;
+
+        return driveLink;
     }
 
     @AuraEnabled(cacheable=true)
