@@ -1,22 +1,22 @@
 <template>
     <lightning-card title="Quote PDF">
 
-        <template if:true={showDataTable}>
+        <template if:false={showPreview}>
             <lightning-datatable
                 key-field="Id"
                 data={quoteLines}
-                columns={columns}
-                onrowselection={handleRowSelection}>
+                columns={columns}>
             </lightning-datatable>
         </template>
 
         <template if:true={showPreview}>
             <div class="slds-p-around_medium">
                 <iframe
-                    src={vfUrl}
+                    src={previewUrl}
                     width="100%"
-                    height="380px"
-                    frameborder="0">
+                    height="500px"
+                    frameborder="0"
+                    title="Quote Preview">
                 </iframe>
             </div>
         </template>
@@ -39,7 +39,7 @@
                     class="slds-m-left_small"
                     label="Preview"
                     variant="brand"
-                    disabled={isSelectionEmpty}
+                    disabled={isPreviewing}
                     onclick={handlePreview}>
                 </lightning-button>
             </template>

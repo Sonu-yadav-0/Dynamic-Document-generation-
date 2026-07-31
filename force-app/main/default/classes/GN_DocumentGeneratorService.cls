@@ -1,6 +1,7 @@
 /**
  * Calls the doc middleware: sends the Word template (stored as a Salesforce File)
- * plus record data, receives the merged .docx back, then hands it to the existing
+ * plus record data, receives the merged document back (.docx, or .pdf when the
+ * middleware converts it via LibreOffice), then hands it to the existing
  * Google Drive upload.
  *
  * Setup expected:
@@ -11,8 +12,39 @@
 public with sharing class GN_DocumentGeneratorService {
 
     @AuraEnabled
-    public static String generateAndUpload(Id quoteId, String templateTitle) {
+    public static String generateAndUpload(Id quoteId, String templateTitle, String outputFormat) {
+        Boolean wantsPdf = 'pdf'.equalsIgnoreCase(outputFormat);
+        Map<String, Object> result = callMiddleware(quoteId, templateTitle, wantsPdf);
 
+        Blob docFile = EncodingUtil.base64Decode((String) result.get('fileBase64'));
+        String docName = (String) result.get('fileName');
+
+        // Push to Google Drive via the existing integration, save the link, and return it
+        String contentType = wantsPdf
+            ? 'application/pdf'
+            : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        String driveLink = GoogleDriveService.uploadFile(docName, docFile, contentType);
+
+        Quote quoteUpdate = new Quote(Id = quoteId);
+        if (wantsPdf) {
+            quoteUpdate.PDF_Drive_Link__c = driveLink;
+        } else {
+            quoteUpdate.Word_Drive_Link__c = driveLink;
+        }
+        update quoteUpdate;
+
+        return driveLink;
+    }
+
+    // Renders the quote as a PDF via the middleware without uploading to Drive,
+    // so the LWC can show it inline before the user commits to generating a file.
+    @AuraEnabled
+    public static String previewQuoteDocument(Id quoteId, String templateTitle) {
+        Map<String, Object> result = callMiddleware(quoteId, templateTitle, true);
+        return (String) result.get('fileBase64');
+    }
+
+    private static Map<String, Object> callMiddleware(Id quoteId, String templateTitle, Boolean wantsPdf) {
         // 1. The template .docx uploaded in Salesforce (latest version by title)
         ContentVersion cv = [
             SELECT VersionData
@@ -51,7 +83,8 @@ public with sharing class GN_DocumentGeneratorService {
         Map<String, Object> payload = new Map<String, Object>{
             'templateBase64' => EncodingUtil.base64Encode(cv.VersionData),
             'data'           => data,
-            'fileName'       => q.QuoteNumber + '.docx'
+            'fileName'       => q.QuoteNumber,
+            'outputFormat'   => wantsPdf ? 'pdf' : 'docx'
         };
 
         // 3. Call the middleware
@@ -70,16 +103,9 @@ public with sharing class GN_DocumentGeneratorService {
 
         Map<String, Object> result =
             (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-        Blob docFile = EncodingUtil.base64Decode((String) result.get('fileBase64'));
-        String docName = (String) result.get('fileName');
-
-        // 4. Push to Google Drive via the existing integration and return the link
-        return uploadToDrive(docFile, docName);
-    }
-
-    private static String uploadToDrive(Blob file, String fileName) {
-        // TODO: plug in the existing Apex + Named Credential (OAuth) Drive upload here
-        // (multipart upload, then return the webViewLink and/or save it on the Quote).
-        return null;
+        if (result.get('fileBase64') == null) {
+            throw new AuraHandledException('Document generation failed: middleware returned no file.');
+        }
+        return result;
     }
 }

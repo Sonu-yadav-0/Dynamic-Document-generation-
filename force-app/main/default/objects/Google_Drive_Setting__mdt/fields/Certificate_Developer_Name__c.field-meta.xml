@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Certificate_Developer_Name__c</fullName>
     <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
     <label>Certificate Developer Name</label>
     <length>100</length>
     <required>true</required>

@@ -2,8 +2,10 @@ import { LightningElement, api, wire } from 'lwc';
 import { CloseActionScreenEvent } from 'lightning/actions';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getQuoteLines from '@salesforce/apex/GN_Quote_Generation.getQuoteLines';
-import generateAndAttachQuotePdf from '@salesforce/apex/GN_Quote_Generation.generateAndAttachQuotePdf';
-import generateAndAttachQuoteWord from '@salesforce/apex/GN_Quote_Generation.generateAndAttachQuoteWord';
+import generateAndUpload from '@salesforce/apex/GN_DocumentGeneratorService.generateAndUpload';
+import previewQuoteDocument from '@salesforce/apex/GN_DocumentGeneratorService.previewQuoteDocument';
+
+const TEMPLATE_TITLE = 'sample-template';
 
 const COLUMNS = [
     {
@@ -31,12 +33,13 @@ const COLUMNS = [
 export default class GN_Quote_generation extends LightningElement {
 
     @api recordId;
-    showPreview = false;
     columns = COLUMNS;
-    showDataTable = true;
     quoteLines = [];
     error;
     isGenerating = false;
+    isPreviewing = false;
+    showPreview = false;
+    previewUrl;
 
     @wire(getQuoteLines, { quoteId: '$recordId' })
     wiredQuoteLines({ data, error }) {
@@ -53,33 +56,49 @@ export default class GN_Quote_generation extends LightningElement {
         }
     }
 
-    get vfUrl() {
-        return 'https://allied-era-dev-ed--c.develop.vf.force.com/apex/GN_QuoteTemplateVf?id=' + this.recordId;
-    }
-
-    handlePreview() {
-        this.showPreview = true;
-        this.showDataTable = false;
-    }
-
     handleCancel() {
         this.dispatchEvent(new CloseActionScreenEvent());
     }
 
     handleBack() {
         this.showPreview = false;
-        this.showDataTable = true;
+        this.previewUrl = undefined;
+    }
+
+    async handlePreview() {
+        if (!this.recordId) {
+            this.error = 'No quote record was provided.';
+            return;
+        }
+
+        this.error = undefined;
+        this.isPreviewing = true;
+
+        try {
+            const base64 = await previewQuoteDocument({
+                quoteId: this.recordId,
+                templateTitle: TEMPLATE_TITLE
+            });
+            this.previewUrl = 'data:application/pdf;base64,' + base64;
+            this.showPreview = true;
+        } catch (e) {
+            const message = e?.body?.message || e?.message || 'Unable to generate the preview.';
+            this.error = message;
+            this.dispatchEvent(new ShowToastEvent({ title: 'Error', message, variant: 'error' }));
+        } finally {
+            this.isPreviewing = false;
+        }
     }
 
     handleDownloadPdf() {
-        return this.generateDocument(generateAndAttachQuotePdf, 'PDF');
+        return this.generateDocument('PDF', 'pdf');
     }
 
     handleDownloadWord() {
-        return this.generateDocument(generateAndAttachQuoteWord, 'Word document');
+        return this.generateDocument('Word document', 'docx');
     }
 
-    async generateDocument(apexMethod, label) {
+    async generateDocument(label, outputFormat) {
         if (!this.recordId) {
             this.error = 'No quote record was provided.';
             return;
@@ -89,7 +108,11 @@ export default class GN_Quote_generation extends LightningElement {
         this.isGenerating = true;
 
         try {
-            const driveLink = await apexMethod({ quoteId: this.recordId });
+            const driveLink = await generateAndUpload({
+                quoteId: this.recordId,
+                templateTitle: TEMPLATE_TITLE,
+                outputFormat
+            });
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Success',
